@@ -1,0 +1,47 @@
+import numpy as np
+
+#training function
+def perceptron_training(inputs, targets, learning_rate = 0.1, epochs = 10):
+    weights = np.zeros(inputs.shape[1])
+    bias = 0
+    for _ in range(epochs):
+      for i in range(len(inputs)):
+        prediction = 1 if np.dot(inputs[i], weights) + bias >= 0 else  0
+        error = targets[i] - prediction
+        weights += learning_rate*error*inputs[i]
+        bias += learning_rate*error
+    return weights, bias
+
+#prediction function
+def perceptron_prediction(inputs, weights, bias):
+  outputs = []
+  for i in range(len(inputs)):
+    prediction = 1 if np.dot(inputs[i], weights) + bias >= 0 else 0
+    outputs.append(prediction)
+  return outputs
+
+#training datat for and gate
+and_inputs = np.array([[0,0], [0,1], [1,0],[1,1]])
+and_targets = np.array([0,0,0,1])
+
+#training perceptron for and gate
+and_weights, and_bias = perceptron_training(and_inputs, and_targets)
+print("Trained wt for AND : ", and_weights)
+print("Trained bias for AND : ", and_bias)
+
+#test for and
+and_outputs = perceptron_prediction(and_inputs, and_weights, and_bias)
+print("Predictions for AND : ", and_outputs)
+
+#training data for or gate
+or_inputs = np.array([[0,0], [0,1], [1,0],[1,1]])
+or_targets = np.array([0,1,1,1])
+
+#training perceptron for or gate
+or_weights, or_bias = perceptron_training(or_inputs, or_targets)
+print("Trained wt for OR : ", or_weights)
+print("Trained bias for OR : ", or_bias)
+
+#test for or
+or_outputs = perceptron_prediction(or_inputs, or_weights, or_bias)
+print("Predictions for OR : ", or_outputs)

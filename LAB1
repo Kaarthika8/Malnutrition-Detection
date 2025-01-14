@@ -1,47 +1,69 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-#training function
-def perceptron_training(inputs, targets, learning_rate = 0.1, epochs = 10):
-    weights = np.zeros(inputs.shape[1])
-    bias = 0
+# Input and expected outputs for AND and OR gates
+inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+y_and = np.array([0, 0, 0, 1])  # AND gate output
+y_or = np.array([0, 1, 1, 1])   # OR gate output
+
+# Initialize weights and bias
+weights = np.random.rand(2)
+bias = np.random.rand(1)
+learning_rate = 0.1
+epochs = 5000
+
+# Sigmoid function and its derivative
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(output):
+    return output * (1 - output)
+
+# Training function
+def train(inputs, targets):
+    global weights, bias
     for _ in range(epochs):
-      for i in range(len(inputs)):
-        prediction = 1 if np.dot(inputs[i], weights) + bias >= 0 else  0
-        error = targets[i] - prediction
-        weights += learning_rate*error*inputs[i]
-        bias += learning_rate*error
-    return weights, bias
+        for i in range(len(inputs)):
+            # Forward pass
+            z = np.dot(inputs[i], weights) + bias
+            output = sigmoid(z)
 
-#prediction function
-def perceptron_prediction(inputs, weights, bias):
-  outputs = []
-  for i in range(len(inputs)):
-    prediction = 1 if np.dot(inputs[i], weights) + bias >= 0 else 0
-    outputs.append(prediction)
-  return outputs
+            # Compute error
+            error = targets[i] - output
 
-#training datat for and gate
-and_inputs = np.array([[0,0], [0,1], [1,0],[1,1]])
-and_targets = np.array([0,0,0,1])
+            # Backward pass (gradient descent with sigmoid derivative)
+            delta = error * sigmoid_derivative(output)
+            weights += learning_rate * delta * inputs[i]
+            bias += learning_rate * delta
 
-#training perceptron for and gate
-and_weights, and_bias = perceptron_training(and_inputs, and_targets)
-print("Trained wt for AND : ", and_weights)
-print("Trained bias for AND : ", and_bias)
+# Train and get outputs for AND gate
+train(inputs, y_and)
+outputs_and = [sigmoid(np.dot(i, weights) + bias) for i in inputs]
 
-#test for and
-and_outputs = perceptron_prediction(and_inputs, and_weights, and_bias)
-print("Predictions for AND : ", and_outputs)
+# Print final outputs for AND gate
+print("AND Gate Outputs:")
+for i, output in enumerate(outputs_and):
+    print(f"Input: {inputs[i]} -> Output: {output[0]:.4f}")
 
-#training data for or gate
-or_inputs = np.array([[0,0], [0,1], [1,0],[1,1]])
-or_targets = np.array([0,1,1,1])
+# Reset weights and bias, then train for OR gate
+weights = np.random.rand(2)
+bias = np.random.rand(1)
+train(inputs, y_or)
+outputs_or = [sigmoid(np.dot(i, weights) + bias) for i in inputs]
 
-#training perceptron for or gate
-or_weights, or_bias = perceptron_training(or_inputs, or_targets)
-print("Trained wt for OR : ", or_weights)
-print("Trained bias for OR : ", or_bias)
+# Print final outputs for OR gate
+print("\nOR Gate Outputs:")
+for i, output in enumerate(outputs_or):
+    print(f"Input: {inputs[i]} -> Output: {output[0]:.4f}")
 
-#test for or
-or_outputs = perceptron_prediction(or_inputs, or_weights, or_bias)
-print("Predictions for OR : ", or_outputs)
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.plot(range(4), outputs_and, marker='o', label='AND Gate', color='blue')
+plt.plot(range(4), outputs_or, marker='o', label='OR Gate', color='orange')
+plt.xticks(range(4), ['00', '01', '10', '11'])
+plt.title('AND and OR Gate Outputs After Training')
+plt.xlabel('Inputs (x1, x2)')
+plt.ylabel('Output')
+plt.legend()
+plt.grid(True)
+plt.show()

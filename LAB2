@@ -1,55 +1,59 @@
-import pandas as pd
 import numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Input
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_diabetes, load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import pandas as pd
 
-# Load the Breast Cancer dataset from sklearn
-cancer = load_breast_cancer()
-X = cancer.data
-Y = cancer.target
+# Function to load datasets
+def load_data(dataset_name):
+    if dataset_name == "diabetes":
+        # Load Diabetes dataset from sklearn
+        data = load_diabetes(as_frame=True)
+        X = data.data
+        y = (data.target > data.target.mean()).astype(int)  # Convert regression to binary classification
+    elif dataset_name == "cancer":
+        # Load Cancer dataset from sklearn
+        data = load_breast_cancer()
+        X = data.data
+        y = data.target
+    elif dataset_name == "sonar":
+        # Load Sonar dataset from a URL
+        data = pd.read_csv("https://raw.githubusercontent.com/jbrownlee/Datasets/master/sonar.csv", header=None)
+        X = data.iloc[:, :-1].values
+        y = data.iloc[:, -1].apply(lambda x: 1 if x == "M" else 0).values
+    else:
+        raise ValueError("Invalid dataset name. Choose from 'diabetes', 'cancer', or 'sonar'.")
 
-# Split the data into training and testing sets
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
+    # Standardize the features
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+    return train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Standardize the features (important for neural networks)
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+# Function to build and train the model
+def build_and_train_model(X_train, X_test, y_train, y_test, activation="relu"):
+    model = Sequential([
+        Dense(32, input_dim=X_train.shape[1], activation=activation),
+        Dense(16, activation=activation),
+        Dense(1, activation='sigmoid')  # Sigmoid for binary classification
+    ])
 
-# Define the Keras model
-model = Sequential()
-model.add(Input(shape=(X_train.shape[1],)))  # Input shape is the number of features (30)
-model.add(Dense(12, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))  # Sigmoid for binary classification
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model.fit(X_train, y_train, epochs=50, batch_size=16, verbose=0)
+    
+    # Evaluate the model
+    y_pred = (model.predict(X_test) > 0.5).astype(int)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy with activation function '{activation}': {accuracy:.4f}")
 
-# Compile the model
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-# Train the model
-history = model.fit(X_train, Y_train, validation_split=0.33, epochs=250, batch_size=10, verbose=1)
-
-# List all data in history
-print(history.history.keys())
-
-# Summarize history for accuracy
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
-plt.title('Model Accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
-
-# Summarize history for loss
-plt.plot(history.history['loss'])
-plt.plot(history.history['val_loss'])
-plt.title('Model Loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
+# Main script
+for dataset in ["diabetes", "cancer", "sonar"]:
+    print(f"\n--- Training on {dataset.upper()} dataset ---")
+    X_train, X_test, y_train, y_test = load_data(dataset)
+    for activation in ["sigmoid", "tanh", "relu", "softmax"]:
+        try:
+            build_and_train_model(X_train, X_test, y_train, y_test, activation)
+        except Exception as e:
+            print(f"Error with activation '{activation}': {e}")

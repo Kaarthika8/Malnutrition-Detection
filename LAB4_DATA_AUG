@@ -68,7 +68,7 @@ history_cifar100 = train_model(cifar100_model ,x_train_100, y_train_100, x_test_
 #plot
 plt.figure(figsize=(12,6))
 
-plt.subplot(1,2,2)
+plt.subplot(1,2,1)
 plt.plot(history_cifar10.history['accuracy'], label='train accuracy')
 plt.plot(history_cifar10.history['val_accuracy'], label='validation accuracy')
 plt.title('CIFAR10')
